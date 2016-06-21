@@ -53,7 +53,8 @@ void usb_remote_wakeup(void);
 			((s) == 16 ? 0x10 :	\
 			             0x00)))
 
-#if defined (__AVR_AT90USB162__) || defined (__AVR_AT90USB82__)
+#if defined (__AVR_AT90USB162__) || defined (__AVR_AT90USB82__) || \
+    defined (__AVR_ATmega32U2__) || defined (__AVR_ATmega16U2__)
 #   define MAX_ENDPOINT     4
 #   define UERST_MASK       0x1E
 #else
@@ -64,7 +65,8 @@ void usb_remote_wakeup(void);
 #define LSB(n) (n & 255)
 #define MSB(n) ((n >> 8) & 255)
 
-#if defined(__AVR_AT90USB162__)
+#if defined(__AVR_AT90USB162__) || \
+    defined (__AVR_ATmega32U2__) || defined (__AVR_ATmega16U2__)
 #define HW_CONFIG() 
 #define PLL_CONFIG() (PLLCSR = ((1<<PLLE)|(1<<PLLP0)))
 #define USB_CONFIG() (USBCON = (1<<USBE))
