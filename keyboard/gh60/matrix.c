@@ -45,6 +45,20 @@ static void select_row(uint8_t row);
 
 void matrix_init(void)
 {
+
+#if defined(GH60_REV_KC60)
+    /*
+     * KC60 uses PF6 (JTAG TDO) and PF7 (JTAG TDI) in matrix,
+     * disable on-by-default JTAG to gain use of these pins.
+     */
+    MCUCR = (1<<JTD);
+    MCUCR = (1<<JTD); // must do it twice in short temporal proximity
+
+    // turn off backlight
+    DDRB |= (1<<6);
+    PORTB &= ~(1<<6);
+#endif
+
     // initialize row and col
     unselect_rows();
     init_cols();
@@ -95,6 +109,8 @@ matrix_row_t matrix_get_row(uint8_t row)
  * col: 0   1   2   3   4   5   6   7   8   9   10  11  12  13
  * pin: F0  F1  E6  C7  C6  B6  D4  B1  B0  B5  B4  D7  D6  B3  (Rev.A)
  * pin:                                 B7                      (Rev.B)
+ * pin: F0  F1  E6  C7  C6  B7  D4  B1  B0  B5  B4  D7  D6  B3  (Rev.CHN,KC60)
+ * pin: F0  F1  E6  C7  C6  B7  D4  B0  B1  B5  B4  D7  D6  B3  (Rev.CNY)
  */
 static void  init_cols(void)
 {
@@ -107,12 +123,48 @@ static void  init_cols(void)
     PORTD |=  (1<<7 | 1<<6 | 1<<4);
     DDRC  &= ~(1<<7 | 1<<6);
     PORTC |=  (1<<7 | 1<<6);
+#if defined(GH60_REV_CHN) || defined(GH60_REV_CNY)
+    DDRB  &= ~(1<<7 | 1<<5 | 1<<4 | 1<<3 | 1<<1 | 1<<0);
+    PORTB |=  (1<<7 | 1<<5 | 1<<4 | 1<<3 | 1<<1 | 1<<0);
+#else
     DDRB  &= ~(1<<7 | 1<<6 | 1<< 5 | 1<<4 | 1<<3 | 1<<1 | 1<<0);
     PORTB |=  (1<<7 | 1<<6 | 1<< 5 | 1<<4 | 1<<3 | 1<<1 | 1<<0);
+#endif
 }
 
 static matrix_row_t read_cols(void)
 {
+#if defined(GH60_REV_CHN) || defined(GH60_REV_KC60)
+    return (PINF&(1<<PF0) ? 0 : (1<<0)) |
+           (PINF&(1<<PF1) ? 0 : (1<<1)) |
+           (PINE&(1<<PE6) ? 0 : (1<<2)) |
+           (PINC&(1<<PC7) ? 0 : (1<<3)) |
+           (PINC&(1<<PC6) ? 0 : (1<<4)) |
+           (PINB&(1<<PB7) ? 0 : (1<<5)) |
+           (PIND&(1<<PD4) ? 0 : (1<<6)) |
+           (PINB&(1<<PB1) ? 0 : (1<<7)) |
+           (PINB&(1<<PB0) ? 0 : (1<<8)) |
+           (PINB&(1<<PB5) ? 0 : (1<<9)) |
+           (PINB&(1<<PB4) ? 0 : (1<<10)) |
+           (PIND&(1<<PD7) ? 0 : (1<<11)) |
+           (PIND&(1<<PD6) ? 0 : (1<<12)) |
+           (PINB&(1<<PB3) ? 0 : (1<<13));
+#elif defined(GH60_REV_CNY)
+    return (PINF&(1<<PF0) ? 0 : (1<<0)) |
+           (PINF&(1<<PF1) ? 0 : (1<<1)) |
+           (PINE&(1<<PE6) ? 0 : (1<<2)) |
+           (PINC&(1<<PC7) ? 0 : (1<<3)) |
+           (PINC&(1<<PC6) ? 0 : (1<<4)) |
+           (PINB&(1<<PB7) ? 0 : (1<<5)) |
+           (PIND&(1<<PD4) ? 0 : (1<<6)) |
+           (PINB&(1<<PB0) ? 0 : (1<<7)) |
+           (PINB&(1<<PB1) ? 0 : (1<<8)) |
+           (PINB&(1<<PB5) ? 0 : (1<<9)) |
+           (PINB&(1<<PB4) ? 0 : (1<<10)) |
+           (PIND&(1<<PD7) ? 0 : (1<<11)) |
+           (PIND&(1<<PD6) ? 0 : (1<<12)) |
+           (PINB&(1<<PB3) ? 0 : (1<<13));
+#else
     return (PINF&(1<<0) ? 0 : (1<<0)) |
            (PINF&(1<<1) ? 0 : (1<<1)) |
            (PINE&(1<<6) ? 0 : (1<<2)) |
@@ -127,17 +179,27 @@ static matrix_row_t read_cols(void)
            (PIND&(1<<7) ? 0 : (1<<11)) |
            (PIND&(1<<6) ? 0 : (1<<12)) |
            (PINB&(1<<3) ? 0 : (1<<13));
+#endif
 }
 
 /* Row pin configuration
  * row: 0   1   2   3   4
- * pin: D0  D1  D2  D3  D5
+ * pin: D0  D1  D2  D3  D5  (Rev.A,B,CHN,CNY)
+ * pin: D0  D1  F6  F7  D5  (Rev.KC60)
  */
 static void unselect_rows(void)
 {
     // Hi-Z(DDR:0, PORT:0) to unselect
+#if defined(GH60_REV_KC60)
+    DDRD  &= ~(1<<PD0 | 1<<PD1 | 1<<PD5);
+    PORTD &= ~(1<<PD0 | 1<<PD1 | 1<<PD5);
+
+    DDRF  &= ~(1<<PF6 | 1<<PF7);
+    PORTF &= ~(1<<PF6 | 1<<PF7);
+#else
     DDRD  &= ~0b00101111;
     PORTD &= ~0b00101111;
+#endif
 }
 
 static void select_row(uint8_t row)
@@ -153,12 +215,22 @@ static void select_row(uint8_t row)
             PORTD &= ~(1<<1);
             break;
         case 2:
+#if defined(GH60_REV_KC60)
+            DDRF  |= (1<<6);
+            PORTF &= ~(1<<6);
+#else
             DDRD  |= (1<<2);
             PORTD &= ~(1<<2);
+#endif
             break;
         case 3:
+#if defined(GH60_REV_KC60)
+            DDRF  |= (1<<7);
+            PORTF &= ~(1<<7);
+#else
             DDRD  |= (1<<3);
             PORTD &= ~(1<<3);
+#endif
             break;
         case 4:
             DDRD  |= (1<<5);
