@@ -6,6 +6,6 @@ const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
            TAB, Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P,   LBRC,RBRC,BSLS, \
            CAPS,A,   S,   D,   F,   G,   H,   J,   K,   L,   SCLN,QUOT,NO,  ENT,  \
            LSFT,NO,  Z,   X,   C,   V,   B,   N,   M,   COMM,DOT, SLSH,NO,  RSFT, \
-           LCTL,LGUI,LALT,          SPC,                     RALT,RGUI,APP, RCTL),
+           LCTL,LGUI,LALT,          SPC,                NO,  RALT,RGUI,APP, RCTL),
 };
 const action_t PROGMEM fn_actions[] = {};
